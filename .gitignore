@@ -1,0 +1,7 @@
+x64/
+*/x64
+Starfall/Starfall
+*/*.vcxproj.user
+.vs
+*/Release
+*/Debug

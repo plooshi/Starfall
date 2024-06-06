@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34616.47
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plooshfinder", "plooshfinder\plooshfinder.vcxproj", "{1EFDB154-D3B5-43BC-8733-F3D6941C9E36}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Starfall", "Starfall\Starfall.vcxproj", "{9C02D0A1-F786-4B04-B466-8D58C5B74FD1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1EFDB154-D3B5-43BC-8733-F3D6941C9E36} = {1EFDB154-D3B5-43BC-8733-F3D6941C9E36}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1EFDB154-D3B5-43BC-8733-F3D6941C9E36}.Debug|x64.ActiveCfg = Debug|x64
+		{1EFDB154-D3B5-43BC-8733-F3D6941C9E36}.Debug|x64.Build.0 = Debug|x64
+		{1EFDB154-D3B5-43BC-8733-F3D6941C9E36}.Release|x64.ActiveCfg = Release|x64
+		{1EFDB154-D3B5-43BC-8733-F3D6941C9E36}.Release|x64.Build.0 = Release|x64
+		{9C02D0A1-F786-4B04-B466-8D58C5B74FD1}.Debug|x64.ActiveCfg = Debug|x64
+		{9C02D0A1-F786-4B04-B466-8D58C5B74FD1}.Debug|x64.Build.0 = Debug|x64
+		{9C02D0A1-F786-4B04-B466-8D58C5B74FD1}.Release|x64.ActiveCfg = Release|x64
+		{9C02D0A1-F786-4B04-B466-8D58C5B74FD1}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2BE449DA-BD65-4FB2-9582-A7FCB41F1393}
+	EndGlobalSection
+EndGlobal
