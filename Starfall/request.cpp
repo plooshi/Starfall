@@ -108,7 +108,7 @@ def:
         bool StringCallback(struct pf_patch_t* patch, void* stream) {
             void* saddr = (void*)((__int64(stream) + 7) + *(int32_t*)(__int64(stream) + 3));
             if (__int64(saddr) >= __int64(rbuf) && __int64(saddr) < (__int64(rbuf) + (int64_t)rsize)) {
-                if (wcscmp((wchar_t*)saddr, L"Could not set libcurl options for easy handle, processing HTTP request failed. Increase verbosity for additional information.") == 0) {
+                if (wcscmp((wchar_t*)saddr, Game == Generic427 ? L"Could not perform game thread setup, processing HTTP request failed. Increase verbosity for additional information." : L"Could not set libcurl options for easy handle, processing HTTP request failed. Increase verbosity for additional information.") == 0) {
                     for (int i = 0; i < 2048; i++) {
                         if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true)) {
                             for (int x = 0; x < 50; x++) {

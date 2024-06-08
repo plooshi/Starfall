@@ -26,7 +26,8 @@ namespace Starfall {
 		};
 		enum UEGame {
 			Generic,
-			Fortnite
+			Fortnite,
+			Generic427 // found in latest EGL
 		};
 	}
 	using namespace Types;
