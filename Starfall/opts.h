@@ -1,7 +1,7 @@
 #pragma once
 #include "ue.h"
 
-constexpr bool Console = true; // if the console window should be created
+constexpr bool Console = false; // if the console window should be created
 constexpr StarfallURLSet URLSet = Default;
 constexpr inline FString Backend = L"http://127.0.0.1:3551"; // your backend url
 constexpr UEGame Game = Fortnite; // use Generic for any UE game other than fortnite
