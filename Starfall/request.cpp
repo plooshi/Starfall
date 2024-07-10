@@ -12,12 +12,12 @@
 #define CallVirt(T, vt, offset, ...) ((T) vt[offset])(__VA_ARGS__)
 
 namespace Unreal {
-    FString FCurlHttpRequest::GetURL()
+    FString FHttpRequestWinInet::GetURL()
     {
         return GetURLFunc(this, FString());
     }
 
-    void FCurlHttpRequest::SetURL(URL& URL)
+    void FHttpRequestWinInet::SetURL(URL& URL)
     {
         FString str = URL;
         SetURLFunc(this, str);
@@ -27,10 +27,10 @@ namespace Unreal {
 
 namespace Starfall {
     bool setupMemLeak = false;
-    void SetupRequest(FCurlHttpRequest* Request) {
-        if (FCurlHttpRequest::SetURLFunc == nullptr) {
+    void SetupRequest(FHttpRequestWinInet* Request) {
+        if (FHttpRequestWinInet::SetURLFunc == nullptr) {
             void* GetFunc = *Request->VTable;
-            FCurlHttpRequest::GetURLFunc = (decltype(FCurlHttpRequest::GetURLFunc)) *Request->VTable;
+            FHttpRequestWinInet::GetURLFunc = (decltype(FHttpRequestWinInet::GetURLFunc)) *Request->VTable;
             uint32_t URLOffset = 0;
             for (int i = 0; i < 100; i++) {
                 // this is only needed for latest
@@ -41,19 +41,19 @@ namespace Starfall {
             }
 
             if (URLOffset == 0) goto def;
-            for (int64_t i = 0; i < ((__int64(FCurlHttpRequest::ProcessRequestVT) - __int64(Request->VTable)) / 8) /* search radius */; i++) {
+            for (int64_t i = 0; i < ((__int64(FHttpRequestWinInet::ProcessRequestVT) - __int64(Request->VTable)) / 8) /* search radius */; i++) {
                 auto func = Request->VTable[i];
                 for (int j = 0; j < 100; j++) {
                     if (CheckBytes<0x48, 0x81, 0xC1>(func, j)) {
                         if (*(uint32_t*)(__int64(func) + j + 3) == URLOffset) {
-                            FCurlHttpRequest::SetURLFunc = (void (*)(FCurlHttpRequest*, FString)) Request->VTable[i];
+                            FHttpRequestWinInet::SetURLFunc = (void (*)(FHttpRequestWinInet*, FString)) Request->VTable[i];
                             return;
                         }
                     }
                 }
             }
 def:
-            FCurlHttpRequest::SetURLFunc = (void (*)(FCurlHttpRequest*, FString)) Request->VTable[10];
+            FHttpRequestWinInet::SetURLFunc = (void (*)(FHttpRequestWinInet*, FString)) Request->VTable[10];
         }
         // this works bc the first request is a datarouter request, and the second request should be after engine init
         else if (!setupMemLeak && Game == Fortnite) {
@@ -73,8 +73,8 @@ def:
     FString backend;
 
     namespace Hooks {
-        bool (*ProcessRequestOG)(FCurlHttpRequest* Request);
-        bool ProcessRequestHook(FCurlHttpRequest* Request) {
+        bool (*ProcessRequestOG)(FHttpRequestWinInet* Request);
+        bool ProcessRequestHook(FHttpRequestWinInet* Request) {
             SetupRequest(Request);
             auto urlS = Request->GetURL();
             auto url = (URL *) malloc(sizeof(URL));
@@ -99,8 +99,9 @@ def:
 
     namespace Callbacks {
         bool PtrCallback(struct pf_patch_t* patch, void* stream) {
-            FCurlHttpRequest::ProcessRequestVT = (void**)stream;
+            FHttpRequestWinInet::ProcessRequestVT = (void**)stream;
 
+            Log(Display, "ProcessRequestVT: 0x%llx\n", __int64(stream) - __int64(buf));
             VTHook((void**)stream, ProcessRequestHook, (void **) &ProcessRequestOG);
             return true;
         }
@@ -108,38 +109,15 @@ def:
         bool StringCallback(struct pf_patch_t* patch, void* stream) {
             void* saddr = (void*)((__int64(stream) + 7) + *(int32_t*)(__int64(stream) + 3));
             if (__int64(saddr) >= __int64(rbuf) && __int64(saddr) < (__int64(rbuf) + (int64_t)rsize)) {
-                if (wcscmp((wchar_t*)saddr, Game == Generic427 ? L"Could not perform game thread setup, processing HTTP request failed. Increase verbosity for additional information." : L"Could not set libcurl options for easy handle, processing HTTP request failed. Increase verbosity for additional information.") == 0) {
+                if (wcscmp((wchar_t*)saddr, L"ProcessRequest failed. Could not initialize Internet connection.") == 0) {
                     for (int i = 0; i < 2048; i++) {
                         if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true)) {
                             for (int x = 0; x < 50; x++) {
                                 if (CheckBytes<0x40>(stream, i + x, true)) {
-                                    Log(Display, "Found using 4.24 & lower method\n");
+                                    Log(Display, "Found ProcessRequest!\n");
                                     stream = (uint8_t*)stream - i - x;
                                     goto HookVT;
                                 }
-                            }
-                        }
-                    }
-                }
-                else if (wcscmp((wchar_t*)saddr, L"STAT_FCurlHttpRequest_ProcessRequest") == 0) {
-                    for (int i = 0; i < 2048; i++) {
-                        if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i, true)) {
-                            Log(Display, "Found using 4.25 & 4.26 method\n");
-                            goto setStream;
-                        }
-                        else if (CheckBytes<0x48, 0x8B, 0xC4>(stream, i, true)) {
-                            Log(Display, "Found using UE 4.27 - 5.3 method\n");
-setStream:
-                            stream = (uint8_t*)stream - i;
-                            goto HookVT;
-                        }
-                        else if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true) || CheckBytes<0x48, 0x83, 0xEC>(stream, i, true)) {
-                            for (int x = 0; x < 50; x++) {
-                                if (CheckBytes<0x40>(stream, i + x, true)) {
-                                    Log(Display, "Found using UE 4.25, 4.26 & 5.4+ method\n");
-                                    stream = (uint8_t*)stream - i - x;
-                                    goto HookVT;
-                                } else if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i + x, true) || CheckBytes<0x4C, 0x8B, 0xC4>(stream, i + x, true)) break;
                             }
                         }
                     }

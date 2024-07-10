@@ -6,12 +6,12 @@
 #define CallVirt(T, vt, offset, ...) ((T) vt[offset])(__VA_ARGS__)
 
 namespace Unreal {
-    class FCurlHttpRequest
+    class FHttpRequestWinInet
     {
     public:
         void** VTable;
-        static inline FString& (*GetURLFunc)(FCurlHttpRequest*, FString) = nullptr;
-        static inline void (*SetURLFunc)(FCurlHttpRequest*, FString) = nullptr;
+        static inline FString& (*GetURLFunc)(FHttpRequestWinInet*, FString) = nullptr;
+        static inline void (*SetURLFunc)(FHttpRequestWinInet*, FString) = nullptr;
         static inline void** ProcessRequestVT = nullptr;
 
         FString GetURL();
@@ -21,10 +21,10 @@ namespace Unreal {
 
 namespace Starfall {
     extern FString backend; // for phoenix/paradise launcher
-    void SetupRequest(FCurlHttpRequest* Request);
+    void SetupRequest(FHttpRequestWinInet* Request);
      
     namespace Hooks {
-        bool ProcessRequestHook(FCurlHttpRequest* Request);
+        bool ProcessRequestHook(FHttpRequestWinInet* Request);
     }
     using namespace Hooks;
 

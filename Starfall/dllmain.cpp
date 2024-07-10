@@ -37,7 +37,6 @@ namespace Starfall {
         rsize = rsection->virtualSize;
 
         FindProcessRequest();
-        if (Game == Fortnite) FindPushWidget();
 
         return;
     }
