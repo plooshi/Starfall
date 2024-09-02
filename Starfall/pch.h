@@ -8,6 +8,7 @@
 #include <array>
 #include <psapi.h>
 #include <string_view>
+#include <string>
 
 namespace Plooshfinder {
 	#include "../plooshfinder/include/plooshfinder_sig.h"
