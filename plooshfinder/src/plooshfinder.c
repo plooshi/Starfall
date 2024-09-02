@@ -127,7 +127,7 @@ void *pf_find_zero_buf(void *buf, size_t size, size_t shc_count) {
         masks[i] = 0xff;
     }
 
-    struct pf_patch_t patch = pf_construct_patch(matches, masks, sizeof(matches) / sizeof(uint8_t), (bool (*)(struct pf_patch_t *, void *stream)) pf_set_zero_buf);
+    struct pf_patch_t patch = pf_construct_patch(matches, masks, shc_count / sizeof(uint8_t), (bool (*)(struct pf_patch_t *, void *stream)) pf_set_zero_buf);
 
     struct pf_patch_t patches[] = {
         patch
