@@ -46,42 +46,29 @@ constexpr uint32_t parsePatternMask(std::string_view s) {
     return val;
 }
 
-template <size_t sz, std::array<uint8_t, sz> match, std::array<uint8_t, sz> mask, bool (*call)(struct pf_patch_t* patch, void* stream)>
-class pf_constexpr_patch_data_t {
-public:
-    static constexpr std::array<uint8_t, sz> matches = match;
-    static constexpr std::array<uint8_t, sz> masks = mask;
-    static constexpr size_t arrsz = sz;
-    static constexpr bool (*cb)(struct pf_patch_t* patch, void* stream) = call;
-};
-template <String _St, Func _Cb>
-constexpr pf_patch_t pf_construct_patch_sig_() {
-    constexpr pf_constexpr_patch_data_t < PatternCount(_St.StringView()), ([]() consteval {
-        constexpr auto st = std::string_view(_St.StringView());
-        constexpr auto arrsz = PatternCount(st);
-        std::array<uint8_t, arrsz> matches = { 0 };
-        size_t cInd = 0;
-        for (int i = 0; i < arrsz; i++) {
-            auto part = st.substr(cInd, st.find_first_of(' ', cInd) == std::string_view::npos ? st.size() - cInd : (st.find_first_of(' ', cInd) + 1) - cInd - 1);
-            matches[i] = parsePatternPart(part);
-            cInd = st.find_first_of(' ', cInd) + 1;
-        }
-        return matches;
-        })(), ([]() consteval {
-            constexpr auto st = std::string_view(_St.StringView());
-            constexpr auto arrsz = PatternCount(st);
-            std::array<uint8_t, arrsz> masks = { 0 };
-            size_t cInd = 0;
-            for (int i = 0; i < arrsz; i++) {
-                auto part = st.substr(cInd, st.find_first_of(' ', cInd) == std::string_view::npos ? st.size() - cInd : (st.find_first_of(' ', cInd) + 1) - cInd - 1);
-                masks[i] = parsePatternMask(part);
-                cInd = st.find_first_of(' ', cInd) + 1;
-            }
-            return masks;
-            })(), _Cb.Get() > d;
-        return pf_construct_patch((void*)d.matches.data(), (void*)d.masks.data(), d.arrsz, d.cb);
-}
-#define pf_construct_patch_sig(sig, callback) pf_construct_patch_sig_<sig, callback>()
+#define pf_construct_patch_sig(sig, callback) ConstexprPatch<sig, callback, ([&]() consteval { \
+    constexpr auto st = std::string_view(sig); \
+    constexpr auto arrsz = PatternCount(st); \
+    std::array<uint8_t, arrsz> matches = { 0 }; \
+    size_t cInd = 0; \
+    for (int i = 0; i < arrsz; i++) { \
+        auto part = st.substr(cInd, st.find_first_of(' ', cInd) == std::string_view::npos ? st.size() - cInd : (st.find_first_of(' ', cInd) + 1) - cInd - 1); \
+        matches[i] = parsePatternPart(part); \
+        cInd = st.find_first_of(' ', cInd) + 1; \
+    } \
+    return matches; \
+})(), ([&]() consteval { \
+    constexpr auto st = std::string_view(sig); \
+    constexpr auto arrsz = PatternCount(st); \
+    std::array<uint8_t, arrsz> masks = { 0 }; \
+    size_t cInd = 0; \
+        for (int i = 0; i < arrsz; i++) { \
+            auto part = st.substr(cInd, st.find_first_of(' ', cInd) == std::string_view::npos ? st.size() - cInd : (st.find_first_of(' ', cInd) + 1) - cInd - 1); \
+            masks[i] = parsePatternMask(part); \
+            cInd = st.find_first_of(' ', cInd) + 1; \
+        } \
+        return masks; \
+})()>().Create()
 #else
 PF_C struct pf_patch_t pf_construct_patch_sig(const char *sig, bool (*callback)(struct pf_patch_t *patch, void *stream));
 #endif
