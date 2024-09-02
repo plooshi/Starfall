@@ -10,11 +10,13 @@
 #include <string_view>
 #include <string>
 
+
 template <size_t _Sz>
-struct String {
+struct ConstexprString {
     char _St[_Sz];
 
-    consteval String(const char(&_Ps)[_Sz])
+public:
+    consteval ConstexprString(const char(&_Ps)[_Sz])
     {
         std::copy_n(_Ps, _Sz, _St);
     }
@@ -26,13 +28,22 @@ struct String {
     constexpr std::string_view StringView() const {
         return _St;
     }
+
+    constexpr int PatternCount() const {
+        int c = 0;
+        for (int i = 0; i < _Sz; i++) {
+            if (_St[i] == ' ') c++;
+        }
+        return c + 1; // last i think
+    }
 };
 
 template <typename _Ft>
-struct Func {
+struct ConstexprFunc {
     _Ft _Fn;
 
-    consteval Func(_Ft _Pf)
+public:
+    consteval ConstexprFunc(_Ft _Pf)
     {
         _Fn = _Pf;
     }
@@ -41,9 +52,34 @@ struct Func {
         return _Fn;
     }
 };
+
+template <size_t _Sz>
+struct ConstexprArray {
+    uint8_t _Ar[_Sz];
+public:
+    consteval ConstexprArray(std::array<uint8_t, _Sz> _Pa) {
+        std::copy_n(_Pa.data(), _Sz, _Ar);
+    }
+
+    constexpr void* Get() const {
+        return (void*)_Ar;
+    }
+};
+
+namespace Plooshfinder {
+    #include "../plooshfinder/include/plooshfinder.h"
+}
+
+template <ConstexprString _St, ConstexprFunc _Cb, ConstexprArray _Ma, ConstexprArray _Mk>
+class ConstexprPatch {
+public:
+    constexpr Plooshfinder::pf_patch_t Create() {
+        return pf_construct_patch((void*)_Ma.Get(), (void*)_Mk.Get(), _St.PatternCount(), _Cb.Get());
+    }
+};
+
 namespace Plooshfinder {
 	#include "../plooshfinder/include/plooshfinder_sig.h"
-	#include "../plooshfinder/include/plooshfinder.h"
 	#include "../plooshfinder/include/formats/pe.h"
 };
 using namespace Plooshfinder;
