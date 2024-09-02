@@ -155,33 +155,7 @@ setStream:
             Log(Display, "ProcessRequest: 0x%llx\n", __int64(stream) - __int64(buf));
             char* ptrMatches = (char*)&stream;
 
-#if !defined(_DEBUG) && !__clang__
             constexpr static char ptrMasks[] = {
-                (char)0xff,
-                (char)0xff,
-                (char)0xff,
-                (char)0xff,
-                (char)0xff,
-                (char)0xff,
-                (char)0xff,
-                (char)0xff
-            };
-
-            constexpr static auto patch2 = pf_construct_patch_dynmatch((void*)ptrMasks, 8, PtrCallback);
-
-            constexpr static struct pf_patch_t patches2[] = {
-                patch2
-            };
-
-            constexpr static struct pf_patchset_t patchset2 = pf_construct_patchset(patches2, sizeof(patches2) / sizeof(struct pf_patch_t), (bool (*)(void*, size_t, pf_patchset_t))pf_find_maskmatch);
-
-            auto& patchToMod = (pf_patch_t &) patch2;
-            DWORD og;
-            VirtualProtect((void*)&(patchToMod.matches), sizeof(void*), PAGE_READWRITE, &og);
-            patchToMod.matches = ptrMatches;
-            VirtualProtect((void*)&(patchToMod.matches), sizeof(void*), og, &og);
-#else
-            char ptrMasks[] = {
                 (char)0xff,
                 (char)0xff,
                 (char)0xff,
@@ -199,7 +173,6 @@ setStream:
             };
 
             struct pf_patchset_t patchset2 = pf_construct_patchset(patches2, sizeof(patches2) / sizeof(struct pf_patch_t), (bool (*)(void*, size_t, pf_patchset_t))pf_find_maskmatch);
-#endif
             while (!pf_patchset_emit(rbuf, rsize, patchset2));
             return true;
         }
