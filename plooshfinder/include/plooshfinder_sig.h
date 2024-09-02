@@ -39,7 +39,7 @@ constexpr uint32_t parsePatternMask(std::string_view s) {
     uint32_t val = 0;
     for (int i = 0; i < s.size(); i++) {
         uint8_t byte = s[i];
-        if (byte >= '0' && byte <= '9' || byte >= 'a' && byte <= 'f' || byte >= 'A' && byte <= 'F') byte = 0xf;
+        if ((byte >= '0' && byte <= '9') || (byte >= 'a' && byte <= 'f') || (byte >= 'A' && byte <= 'F')) byte = 0xf;
         else if (byte == '?') byte = 0x0;
         val = (val << 4) | (byte & 0xF);
     }

@@ -4,7 +4,8 @@
 
 namespace Starfall {
     namespace Hooking {
-        __forceinline void AsmHook(void* ptr, void* detour) {
+        template <typename _Ft>
+        __forceinline void AsmHook(void* ptr, _Ft detour) {
             if (!ptr || !detour) return;
 
             uint8_t data[] = {
@@ -28,7 +29,12 @@ namespace Starfall {
 
         bool Ret0Callback(struct pf_patch_t* patch, void* stream);
 
-        void VTHook(void** addr, void* detour, void** orig = nullptr);
+        void VTHook(void** addr, void *detour, void** orig = nullptr);
+
+        template <class _Ft>
+        inline void VTHook(void** addr, _Ft detour, void** orig = nullptr) {
+            VTHook(addr, (void*)detour, orig);
+        }
     }
     using namespace Hooking;
 

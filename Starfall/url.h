@@ -85,4 +85,10 @@ namespace Starfall {
         void Dealloc();
         void DeallocPathQuery();
     };
+
 }
+#ifdef __clang__
+#define __URL_SetHost(url, host) url->SetHost(host)
+#else
+#define __URL_SetHost(url, host) url->SetHost<host>()
+#endif

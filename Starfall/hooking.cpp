@@ -16,7 +16,7 @@ namespace Starfall {
             return true;
         }
 
-        void VTHook(void** addr, void* detour, void** orig) {
+        void VTHook(void** addr, void *detour, void** orig) {
             DWORD oldProt;
 
             VirtualProtect(addr, sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProt);

@@ -84,7 +84,12 @@ def:
 
             Log(Display, "URL: %ls\n", static_cast<wchar_t *>(urlS));
             if (shouldRedirect(url)) {
-                Request->SetURL(UseBackendParam ? url->SetHost(backend) : url->SetHost<Backend>());
+                if (UseBackendParam)
+                    url->SetHost(backend);
+                else {
+                    __URL_SetHost(url, Backend);
+                }
+                Request->SetURL(*url);
 
                 UseBackendParam ? url->Dealloc() : url->DeallocPathQuery();
             }
@@ -150,7 +155,7 @@ setStream:
             Log(Display, "ProcessRequest: 0x%llx\n", __int64(stream) - __int64(buf));
             char* ptrMatches = (char*)&stream;
 
-#ifndef _DEBUG
+#if !defined(_DEBUG) && !__clang__
             constexpr static char ptrMasks[] = {
                 (char)0xff,
                 (char)0xff,
