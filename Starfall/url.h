@@ -8,7 +8,8 @@ namespace Starfall {
         using StrType = FString;
         StrType Protocol, Seperator, Domain, Port, Path, Query;
 
-        void Construct(StrType& url) {
+        __forceinline void Construct(StrType& url) {
+            __stosb((uint8_t*)this, 0, sizeof(URL));
             auto ProtoEnd = url.find(':');
             Protocol = url.substr(0, ProtoEnd);
             auto ProtoSize = (url[ProtoEnd + 1] == '/' && url[ProtoEnd + 2] == '/') ? 3 : 1;
@@ -28,7 +29,7 @@ namespace Starfall {
             PathStart.Dealloc();
         }
 
-        URL& SetHost(FString host) {
+        __forceinline URL& SetHost(FString host) {
             auto ProtoEnd = host.find(':');
             Protocol = host.substr(0, ProtoEnd);
             auto ProtoSize = (host[ProtoEnd + 1] == '/' && host[ProtoEnd + 2] == '/') ? 3 : 1;
@@ -50,7 +51,7 @@ namespace Starfall {
         }
 
         template <FString host>
-        URL& SetHost() {
+        __forceinline URL& SetHost() {
             constexpr auto ProtoEnd = FStringUtil::find_const(host, ':');
             Protocol.Dealloc();
             constexpr static auto ProtocolS = FStringUtil::substr<host, 0, ProtoEnd>();
@@ -78,9 +79,20 @@ namespace Starfall {
             return *this;
         }
 
-        StrType GetUrl();
+        __forceinline StrType GetUrl() {
+            FString OutStr = FString((Protocol.Length - 1) + (Seperator.Length - 1) + (Domain.Length - 1) + (Port.Length - 1) + (Path.Length - 1) + (Query.Length - 1) + 1);
+            __movsb(PBYTE(OutStr.String), (const PBYTE)Protocol.String, Protocol.Length * 2);
+            __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Seperator.String, Seperator.Length * 2);
+            __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Domain.String, Domain.Length * 2);
+            __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Port.String, Port.Length * 2);
+            __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Path.String, Path.Length * 2);
+            if (Query.String) __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Query.String, Query.Length * 2);
+            return OutStr;
+        }
 
-        operator StrType();
+        __forceinline operator StrType() {
+            return GetUrl();
+        }
 
         void Dealloc();
         void DeallocPathQuery();

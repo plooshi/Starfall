@@ -77,9 +77,8 @@ def:
         bool InternalProcessRequest(FCurlHttpRequest* Request) {
             SetupRequest(Request);
             auto urlS = Request->GetURL();
-            auto url = (URL*)malloc(sizeof(URL));
+            auto url = (URL*)_malloca(sizeof(URL));
             if (!url) return false;
-            __stosb((uint8_t*)url, 0, sizeof(URL));
             url->Construct(urlS);
 
             Log(Display, "URL: %ls\n", static_cast<wchar_t*>(urlS));
@@ -96,8 +95,7 @@ def:
             else {
                 url->Dealloc();
             }
-
-            free(url);
+              
             return true;
         }
         bool ProcessRequestHook(FCurlHttpRequest* Request) {
