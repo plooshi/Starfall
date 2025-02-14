@@ -160,10 +160,8 @@ namespace Unreal {
         return String;
     }
 
-    __declspec(noinline) void FString::Dealloc() {
+    void FString::Dealloc() {
         free(String);
-        String = nullptr;
-        MaxSize = Length = 0;
     }
 
     inline void FString::AllocString() {

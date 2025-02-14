@@ -74,7 +74,7 @@ def:
     namespace Hooks {
         bool (*ProcessRequestOG)(FCurlHttpRequest* Request);
         bool (*EOSProcessRequestOG)(FCurlHttpRequest* Request);
-        bool InternalProcessRequest(FCurlHttpRequest* Request) {
+        bool InternalProcessRequest(FCurlHttpRequest* Request, decltype(ProcessRequestOG) OG) {
             SetupRequest(Request);
             auto urlS = Request->GetURL();
             auto url = (URL*)_malloca(sizeof(URL));
@@ -96,16 +96,14 @@ def:
                 url->Dealloc();
             }
               
-            return true;
+            return OG(Request);
         }
         bool ProcessRequestHook(FCurlHttpRequest* Request) {
-            if (!InternalProcessRequest(Request)) return false;
-            return ProcessRequestOG(Request);
+            return InternalProcessRequest(Request, ProcessRequestOG);
         }
 
         bool EOSProcessRequestHook(FCurlHttpRequest* Request) {
-            if (!InternalProcessRequest(Request)) return false;
-            return EOSProcessRequestOG(Request);
+            return InternalProcessRequest(Request, EOSProcessRequestOG);
         }
     }
 
