@@ -140,7 +140,7 @@ def:
         bool StringCallback(struct pf_patch_t* patch, void* stream) {
             void* saddr = (void*)((__int64(stream) + 7) + *(int32_t*)(__int64(stream) + 3));
             if (__int64(saddr) >= __int64(rbuf) && __int64(saddr) < (__int64(rbuf) + (int64_t)rsize)) {
-                if (wcscmp((wchar_t*)saddr, L"ProcessRequest failed. URL '%s' is not using a whitelisted domain. %p") == 0) {
+                if (wcscmp((wchar_t*)saddr, L"%p: request (easy handle:%p) has been added to threaded queue for processing") == 0) {
                     for (int i = 0; i < 2048; i++) {
                         if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true)) {
                             for (int x = 0; x < 50; x++) {
@@ -198,7 +198,7 @@ setStream:
         bool EOSStringCallback(struct pf_patch_t* patch, void* stream) {
             void* saddr = (void*)((__int64(stream) + 7) + *(int32_t*)(__int64(stream) + 3));
             if (__int64(saddr) >= __int64(EOSRDataBuf) && __int64(saddr) < (__int64(EOSRDataBuf) + (int64_t)EOSRDataSize)) {
-                if (wcscmp((wchar_t*)saddr, L"ProcessRequest failed. URL '%s' is not using a whitelisted domain. %p") == 0) {
+                if (wcscmp((wchar_t*)saddr, L"%p: request (easy handle:%p) has been added to threaded queue for processing") == 0) {
                     for (int i = 0; i < 2048; i++) {
                         if (CheckBytes<0x48, 0x89, 0x5C>(stream, i, true)) {
                             Log(Display, "Found EOS ProcessRequest\n");
