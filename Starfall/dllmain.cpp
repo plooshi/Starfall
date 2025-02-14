@@ -26,18 +26,34 @@ namespace Starfall {
         }
 
         buf = *(void**)(__readgsqword(0x60) + 0x10);
+        EOSBuf = GetModuleHandleA("EOSSDK-Win64-Shipping.dll");
+        if (!EOSBuf)
+            EOSBuf = LoadLibraryA("EOSSDK-Win64-Shipping.dll");
 
-        auto section = pe_get_section((char*)buf, ".text");
-        auto rsection = pe_get_section((char*)buf, ".rdata");
+        {
+            auto section = pe_get_section((char*)buf, ".text");
+            auto rsection = pe_get_section((char*)buf, ".rdata");
 
-        tbuf = (void*)(__int64(buf) + section->virtualAddress);
-        tsize = section->virtualSize;
+            tbuf = (void*)(__int64(buf) + section->virtualAddress);
+            tsize = section->virtualSize;
 
-        rbuf = (void*)(__int64(buf) + rsection->virtualAddress);
-        rsize = rsection->virtualSize;
+            rbuf = (void*)(__int64(buf) + rsection->virtualAddress);
+            rsize = rsection->virtualSize;
+        }
+
+        if (EOSBuf) {
+            auto section = pe_get_section((char*)EOSBuf, ".text");
+            auto rsection = pe_get_section((char*)EOSBuf, ".rdata");
+
+            EOSTextBuf = (void*)(__int64(EOSBuf) + section->virtualAddress);
+            EOSTextSize = section->virtualSize;
+
+            EOSRDataBuf = (void*)(__int64(EOSBuf) + rsection->virtualAddress);
+            EOSRDataSize = rsection->virtualSize;
+        }
 
         FindProcessRequest();
-        if (Game == Fortnite) FindPushWidget();
+        //if (Game == Fortnite) FindPushWidget();
 
         return;
     }

@@ -10,8 +10,7 @@ namespace Unreal {
     {
     public:
         void** VTable;
-        static inline FString& (*GetURLFunc)(FCurlHttpRequest*, FString) = nullptr;
-        static inline void (*SetURLFunc)(FCurlHttpRequest*, FString) = nullptr;
+        static inline int64_t SetURLIdx;
         static inline void** ProcessRequestVT = nullptr;
 
         FString GetURL();

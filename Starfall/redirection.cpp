@@ -41,6 +41,7 @@ namespace Starfall {
                     L"on.epicgames.com",
                     L"game-social.epicgames.com",
                     L"ak.epicgames.com",
+                    L"epicgames.dev"
                     //L"cdn2.unrealengine.com" // only needed if you have fixed friend images in friends list
                 };
 

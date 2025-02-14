@@ -14,13 +14,13 @@
 namespace Unreal {
     FString FCurlHttpRequest::GetURL()
     {
-        return GetURLFunc(this, FString());
+        return ((FString&(*)(FCurlHttpRequest*, FString)) VTable[0])(this, FString());
     }
 
     void FCurlHttpRequest::SetURL(URL& URL)
     {
         FString str = URL;
-        SetURLFunc(this, str);
+        ((void (*)(FCurlHttpRequest*, FString)) VTable[SetURLIdx])(this, str);
         free(str.String);
     }
 }
@@ -28,9 +28,8 @@ namespace Unreal {
 namespace Starfall {
     bool setupMemLeak = false;
     void SetupRequest(FCurlHttpRequest* Request) {
-        if (FCurlHttpRequest::SetURLFunc == nullptr) {
+        if (FCurlHttpRequest::SetURLIdx == 0) {
             void* GetFunc = *Request->VTable;
-            FCurlHttpRequest::GetURLFunc = (decltype(FCurlHttpRequest::GetURLFunc)) *Request->VTable;
             uint32_t URLOffset = 0;
             for (int i = 0; i < 100; i++) {
                 // this is only needed for latest
@@ -46,14 +45,14 @@ namespace Starfall {
                 for (int j = 0; j < 100; j++) {
                     if (CheckBytes<0x48, 0x81, 0xC1>(func, j)) {
                         if (*(uint32_t*)(__int64(func) + j + 3) == URLOffset) {
-                            FCurlHttpRequest::SetURLFunc = (void (*)(FCurlHttpRequest*, FString)) Request->VTable[i];
+                            FCurlHttpRequest::SetURLIdx = i;
                             return;
                         }
                     }
                 }
             }
 def:
-            FCurlHttpRequest::SetURLFunc = (void (*)(FCurlHttpRequest*, FString)) Request->VTable[10];
+            FCurlHttpRequest::SetURLIdx = 10;
         }
         // this works bc the first request is a datarouter request, and the second request should be after engine init
         else if (!setupMemLeak && Game == Fortnite) {
@@ -74,15 +73,16 @@ def:
 
     namespace Hooks {
         bool (*ProcessRequestOG)(FCurlHttpRequest* Request);
-        bool ProcessRequestHook(FCurlHttpRequest* Request) {
+        bool (*EOSProcessRequestOG)(FCurlHttpRequest* Request);
+        bool InternalProcessRequest(FCurlHttpRequest* Request) {
             SetupRequest(Request);
             auto urlS = Request->GetURL();
-            auto url = (URL *) malloc(sizeof(URL));
+            auto url = (URL*)malloc(sizeof(URL));
             if (!url) return false;
             __stosb((uint8_t*)url, 0, sizeof(URL));
             url->Construct(urlS);
 
-            Log(Display, "URL: %ls\n", static_cast<wchar_t *>(urlS));
+            Log(Display, "URL: %ls\n", static_cast<wchar_t*>(urlS));
             if (shouldRedirect(url)) {
                 if (UseBackendParam)
                     url->SetHost(backend);
@@ -98,7 +98,16 @@ def:
             }
 
             free(url);
+            return true;
+        }
+        bool ProcessRequestHook(FCurlHttpRequest* Request) {
+            if (!InternalProcessRequest(Request)) return false;
             return ProcessRequestOG(Request);
+        }
+
+        bool EOSProcessRequestHook(FCurlHttpRequest* Request) {
+            if (!InternalProcessRequest(Request)) return false;
+            return EOSProcessRequestOG(Request);
         }
     }
 
@@ -110,10 +119,28 @@ def:
             return true;
         }
 
+        bool EOSPtrCallback(struct pf_patch_t* patch, void* stream) {
+            VTHook((void**)stream, EOSProcessRequestHook, (void**)&EOSProcessRequestOG);
+            return true;
+        }
+
+
+        constexpr static char ptrMasks[] = {
+            (char)0xff,
+            (char)0xff,
+            (char)0xff,
+            (char)0xff,
+            (char)0xff,
+            (char)0xff,
+            (char)0xff,
+            (char)0xff
+        };
+
+
         bool StringCallback(struct pf_patch_t* patch, void* stream) {
             void* saddr = (void*)((__int64(stream) + 7) + *(int32_t*)(__int64(stream) + 3));
             if (__int64(saddr) >= __int64(rbuf) && __int64(saddr) < (__int64(rbuf) + (int64_t)rsize)) {
-                if (wcscmp((wchar_t*)saddr, Game == Generic427 ? L"Could not perform game thread setup, processing HTTP request failed. Increase verbosity for additional information." : L"Could not set libcurl options for easy handle, processing HTTP request failed. Increase verbosity for additional information.") == 0) {
+                if (wcscmp((wchar_t*)saddr, L"ProcessRequest failed. URL '%s' is not using a whitelisted domain. %p") == 0) {
                     for (int i = 0; i < 2048; i++) {
                         if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true)) {
                             for (int x = 0; x < 50; x++) {
@@ -144,7 +171,9 @@ setStream:
                                     Log(Display, "Found using UE 4.25, 4.26 & 5.4+ method\n");
                                     stream = (uint8_t*)stream - i - x;
                                     goto HookVT;
-                                } else if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i + x, true) || CheckBytes<0x4C, 0x8B, 0xC4>(stream, i + x, true)) break;
+                                }
+                                else if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i + x, true) || CheckBytes<0x48, 0x8B, 0xC4>(stream, i + x, true)) 
+                                    break;
                             }
                         }
                     }
@@ -155,17 +184,6 @@ setStream:
             Log(Display, "ProcessRequest: 0x%llx\n", __int64(stream) - __int64(buf));
             char* ptrMatches = (char*)&stream;
 
-            constexpr static char ptrMasks[] = {
-                (char)0xff,
-                (char)0xff,
-                (char)0xff,
-                (char)0xff,
-                (char)0xff,
-                (char)0xff,
-                (char)0xff,
-                (char)0xff
-            };
-
             auto patch2 = pf_construct_patch(ptrMatches, (void*)ptrMasks, 8, PtrCallback);
 
             struct pf_patch_t patches2[] = {
@@ -174,6 +192,36 @@ setStream:
 
             struct pf_patchset_t patchset2 = pf_construct_patchset(patches2, sizeof(patches2) / sizeof(struct pf_patch_t), (bool (*)(void*, size_t, pf_patchset_t))pf_find_maskmatch);
             while (!pf_patchset_emit(rbuf, rsize, patchset2));
+            return true;
+        }
+
+        bool EOSStringCallback(struct pf_patch_t* patch, void* stream) {
+            void* saddr = (void*)((__int64(stream) + 7) + *(int32_t*)(__int64(stream) + 3));
+            if (__int64(saddr) >= __int64(EOSRDataBuf) && __int64(saddr) < (__int64(EOSRDataBuf) + (int64_t)EOSRDataSize)) {
+                if (wcscmp((wchar_t*)saddr, L"ProcessRequest failed. URL '%s' is not using a whitelisted domain. %p") == 0) {
+                    for (int i = 0; i < 2048; i++) {
+                        if (CheckBytes<0x48, 0x89, 0x5C>(stream, i, true)) {
+                            Log(Display, "Found EOS ProcessRequest\n");
+                            stream = (uint8_t*)stream - i;
+                            goto HookVT;
+                        }
+                    }
+                }
+            }
+            return false;
+        HookVT:
+            Log(Display, "EOS ProcessRequest: 0x%llx\n", __int64(stream) - __int64(EOSBuf));
+
+            char* ptrMatches = (char*)&stream;
+
+            auto patch2 = pf_construct_patch(ptrMatches, (void*)ptrMasks, 8, EOSPtrCallback);
+
+            struct pf_patch_t patches2[] = {
+                patch2
+            };
+
+            struct pf_patchset_t patchset2 = pf_construct_patchset(patches2, sizeof(patches2) / sizeof(struct pf_patch_t), (bool (*)(void*, size_t, pf_patchset_t))pf_find_maskmatch);
+            while (!pf_patchset_emit(EOSRDataBuf, EOSRDataSize, patchset2));
             return true;
         }
     }
@@ -188,16 +236,30 @@ setStream:
                 0xfb,
                 0xff
             };
+            {
+                constexpr static auto patch = pf_construct_patch((void*)matches.data(), (void*)masks.data(), 2, StringCallback);
 
-            constexpr static auto patch = pf_construct_patch((void*)matches.data(), (void*)masks.data(), 2, StringCallback);
+                constexpr static pf_patch_t patches[] = {
+                    patch
+                };
 
-            constexpr static pf_patch_t patches[] = {
-                patch
-            };
+                constexpr static struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t), pf_find_maskmatch);
 
-            constexpr static struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t), pf_find_maskmatch);
+                while (!pf_patchset_emit(tbuf, tsize, patchset));
+            }
 
-            while (!pf_patchset_emit(tbuf, tsize, patchset));
+            if (EOSBuf) {
+
+                constexpr static auto patch = pf_construct_patch((void*)matches.data(), (void*)masks.data(), 2, EOSStringCallback);
+
+                constexpr static pf_patch_t patches[] = {
+                    patch
+                };
+
+                constexpr static struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t), pf_find_maskmatch);
+
+                while (!pf_patchset_emit(EOSTextBuf, EOSTextSize, patchset));
+            }
         }
     }
 }

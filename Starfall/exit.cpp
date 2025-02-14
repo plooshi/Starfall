@@ -25,6 +25,7 @@ namespace Starfall {
     namespace Callbacks {
         bool RequestExitWithStatusCallback(struct pf_patch_t* patch, void* stream) {
             AsmHook(stream, Hooks::RequestExitWithStatusHook);
+            AsmHook((void*)(uint64_t(buf) + 0x221a404), Hooks::RequestExitWithStatusHook);
             return true;
         }
 
@@ -85,6 +86,9 @@ namespace Starfall {
             constexpr static struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t), (bool (*)(void*, size_t, pf_patchset_t))pf_find_maskmatch);
 
             pf_patchset_emit(tbuf, tsize, patchset);
+            //AsmHook((void*)(uint64_t(buf) + 0x221a404), Hooks::RequestExitWithStatusHook);
+            //AsmHook((void*)(uint64_t(buf) + 0x221a438), Hooks::RequestExitWithStatusHook);
+            //AsmHook((void*)(uint64_t(buf) + 0x48830b0), Hooks::UnsafeEnvironmentPopupHook);
         }
     }
 }
