@@ -53,7 +53,7 @@ namespace Starfall {
         }
 
         FindProcessRequest();
-        //if (Game == Fortnite) FindPushWidget();
+        if (bHasPushWidget) FindPushWidget();
 
         return;
     }

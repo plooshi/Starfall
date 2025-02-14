@@ -55,7 +55,7 @@ def:
             FCurlHttpRequest::SetURLIdx = 10;
         }
         // this works bc the first request is a datarouter request, and the second request should be after engine init
-        else if (!setupMemLeak && Game == Fortnite) {
+        else if (!setupMemLeak && FixMemLeak) {
             constexpr static struct pf_patch_t ml_patch = pf_construct_patch_sig("4C 8B DC 55 57 41 56 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B 01 41 B6", Ret0Callback);
 
             constexpr static struct pf_patch_t patches[] = {
