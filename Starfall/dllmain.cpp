@@ -11,7 +11,7 @@ namespace Starfall {
 
             FILE* fptr;
             freopen_s(&fptr, "CONOUT$", "w+", stdout);
-            SetConsoleTitleA("Starfall - https://github.com/ParadiseFN/Starfall");
+            SetConsoleTitleA("Starfall - https://github.com/plooshi/Starfall");
         }
 
         if (UseBackendParam) {

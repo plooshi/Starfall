@@ -80,11 +80,11 @@ namespace Starfall {
         }
 
         __forceinline StrType GetUrl() {
-            FString OutStr = FString((Protocol.Length - 1) + (Seperator.Length - 1) + (Domain.Length - 1) + (Port.Length - 1) + (Path.Length - 1) + (Query.String ? Query.Length - 1 : 0) + 1);
+            FString OutStr = FString((Protocol.Length - 1) + (Seperator.Length - 1) + (Domain.Length - 1) + (Port.String ? Port.Length - 1 : 0) + (Path.Length - 1) + (Query.String ? Query.Length - 1 : 0));
             __movsb(PBYTE(OutStr.String), (const PBYTE)Protocol.String, Protocol.Length * 2);
             __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Seperator.String, Seperator.Length * 2);
             __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Domain.String, Domain.Length * 2);
-            __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Port.String, Port.Length * 2);
+            if (Port.String) __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Port.String, Port.Length * 2);
             __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Path.String, Path.Length * 2);
             if (Query.String) __movsb(PBYTE(OutStr.String + wcslen(OutStr.String)), (const PBYTE)Query.String, Query.Length * 2);
             return OutStr;

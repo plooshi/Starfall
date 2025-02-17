@@ -133,62 +133,56 @@ def:
         };
 
 
-        bool StringCallback(struct pf_patch_t* patch, void* stream) {
-            void* saddr = (void*)((__int64(stream) + 7) + *(int32_t*)(__int64(stream) + 3));
-            if (__int64(saddr) >= __int64(rbuf) && __int64(saddr) < (__int64(rbuf) + (int64_t)rsize)) {
-                if (wcscmp((wchar_t*)saddr, L"%p: request (easy handle:%p) has been added to threaded queue for processing") == 0) {
-                    for (int i = 0; i < 2048; i++) {
-                        if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true)) {
-                            for (int x = 0; x < 50; x++) {
-                                if (CheckBytes<0x40>(stream, i + x, true)) {
-                                    Log(Display, "Found using 4.24 & lower method\n");
-                                    stream = (uint8_t*)stream - i - x;
-                                    goto HookVT;
-                                }
-                            }
-                        }
-                    }
+        void* checkStream(void *stream) {
+            for (int i = 0; i < 2048; i++) {
+                if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i, true)) {
+                    Log(Display, "Found using 4.25 & 4.26 method\n");
+                    goto setStream;
                 }
-                else if (wcscmp((wchar_t*)saddr, L"STAT_FCurlHttpRequest_ProcessRequest") == 0) {
-                    for (int i = 0; i < 2048; i++) {
-                        if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i, true)) {
-                            Log(Display, "Found using 4.25 & 4.26 method\n");
-                            goto setStream;
+                else if (CheckBytes<0x48, 0x8B, 0xC4>(stream, i, true)) {
+                    Log(Display, "Found using UE 4.27 - 5.3 method\n");
+                setStream:
+                    return (uint8_t*)stream - i;
+                }
+                else if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true) || CheckBytes<0x48, 0x83, 0xEC>(stream, i, true)) {
+                    for (int x = 0; x < 50; x++) {
+                        if (CheckBytes<0x40>(stream, i + x, true)) {
+                            Log(Display, "Found using UE 4.16 - 4.26 & 5.4+ method\n");
+                            return (uint8_t*)stream - i - x;
                         }
-                        else if (CheckBytes<0x48, 0x8B, 0xC4>(stream, i, true)) {
-                            Log(Display, "Found using UE 4.27 - 5.3 method\n");
-setStream:
-                            stream = (uint8_t*)stream - i;
-                            goto HookVT;
-                        }
-                        else if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true) || CheckBytes<0x48, 0x83, 0xEC>(stream, i, true)) {
-                            for (int x = 0; x < 50; x++) {
-                                if (CheckBytes<0x40>(stream, i + x, true)) {
-                                    Log(Display, "Found using UE 4.25, 4.26 & 5.4+ method\n");
-                                    stream = (uint8_t*)stream - i - x;
-                                    goto HookVT;
-                                }
-                                else if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i + x, true) || CheckBytes<0x48, 0x8B, 0xC4>(stream, i + x, true)) 
-                                    break;
-                            }
-                        }
+                        else if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i + x, true) || CheckBytes<0x48, 0x8B, 0xC4>(stream, i + x, true))
+                            break;
                     }
                 }
             }
+            return nullptr;
+        }
+        bool StringCallback(struct pf_patch_t* patch, void* stream) {
+            void* saddr = (void*)((__int64(stream) + 7) + *(int32_t*)(__int64(stream) + 3));
+            void* newStream = nullptr;
+            if (__int64(saddr) >= __int64(rbuf) && __int64(saddr) < (__int64(rbuf) + (int64_t)rsize)) {
+                if (wcscmp((wchar_t*)saddr, L"%p: request (easy handle:%p) has been added to threaded queue for processing") == 0) {
+                    newStream = checkStream(stream);
+                }
+                else if (wcscmp((wchar_t*)saddr, L"STAT_FCurlHttpRequest_ProcessRequest") == 0) {
+                    newStream = checkStream(stream);
+                }
+            }
+            if (newStream) {
+                Log(Display, "ProcessRequest: 0x%llx\n", __int64(newStream) - __int64(buf));
+                char* ptrMatches = (char*)&newStream;
+
+                auto patch2 = pf_construct_patch(ptrMatches, (void*)ptrMasks, 8, PtrCallback);
+
+                struct pf_patch_t patches2[] = {
+                    patch2
+                };
+
+                struct pf_patchset_t patchset2 = pf_construct_patchset(patches2, sizeof(patches2) / sizeof(struct pf_patch_t), (bool (*)(void*, size_t, pf_patchset_t))pf_find_maskmatch);
+                while (!pf_patchset_emit(rbuf, rsize, patchset2));
+                return true;
+            }
             return false;
-        HookVT:
-            Log(Display, "ProcessRequest: 0x%llx\n", __int64(stream) - __int64(buf));
-            char* ptrMatches = (char*)&stream;
-
-            auto patch2 = pf_construct_patch(ptrMatches, (void*)ptrMasks, 8, PtrCallback);
-
-            struct pf_patch_t patches2[] = {
-                patch2
-            };
-
-            struct pf_patchset_t patchset2 = pf_construct_patchset(patches2, sizeof(patches2) / sizeof(struct pf_patch_t), (bool (*)(void*, size_t, pf_patchset_t))pf_find_maskmatch);
-            while (!pf_patchset_emit(rbuf, rsize, patchset2));
-            return true;
         }
 
         bool EOSStringCallback(struct pf_patch_t* patch, void* stream) {
