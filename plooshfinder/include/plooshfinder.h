@@ -28,7 +28,6 @@ struct pf_patch_t {
 struct pf_patchset_t {
     struct pf_patch_t *patches;
     uint32_t count;
-    bool (*handler)(void *buf, size_t size, struct pf_patchset_t patch);
 };
 #pragma pack(pop)
 
@@ -60,22 +59,21 @@ constexpr pf_patch_t pf_construct_patch_dynmatch(void* masks, uint32_t count, bo
     return patch;
 }
 
-constexpr struct pf_patchset_t pf_construct_patchset(struct pf_patch_t* patches, uint32_t count, bool (*handler)(void *buf, size_t size, struct pf_patchset_t patchset)) {
+constexpr struct pf_patchset_t pf_construct_patchset(struct pf_patch_t* patches, uint32_t count) {
     struct pf_patchset_t patchset;
 
     patchset.patches = patches;
     patchset.count = count;
-    patchset.handler = handler;
 
     return patchset;
 }
 
-__forceinline constexpr struct pf_patchset_t pf_construct_patchset(const struct pf_patch_t* patches, uint32_t count, bool (*handler)(void* buf, size_t size, struct pf_patchset_t patchset)) {
-    return pf_construct_patchset((struct pf_patch_t*)patches, count, handler);
+__forceinline constexpr struct pf_patchset_t pf_construct_patchset(const struct pf_patch_t* patches, uint32_t count) {
+    return pf_construct_patchset((struct pf_patch_t*)patches, count);
 }
 #else
 PF_C struct pf_patch_t pf_construct_patch(void *matches, void *masks, uint32_t count, bool (*callback)(struct pf_patch_t *patch, void *stream));
-PF_C struct pf_patchset_t pf_construct_patchset(struct pf_patch_t* patches, uint32_t count, bool (*handler)(void* buf, size_t size, struct pf_patchset_t patchset));
+PF_C struct pf_patchset_t pf_construct_patchset(struct pf_patch_t* patches, uint32_t count);
 #endif
 PF_C bool pf_patchset_emit(void *buf, size_t size, struct pf_patchset_t patchset);
 PF_C void pf_disable_patch(struct pf_patch_t *patch);

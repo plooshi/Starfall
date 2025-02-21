@@ -22,7 +22,6 @@ struct pf_patch8_t {
 struct pf_patchset8_t {
     struct pf_patch8_t *patches;
     uint32_t count;
-    bool (*handler)(void *buf, size_t size, struct pf_patchset8_t patch);
 };
 #pragma pack(pop)
 

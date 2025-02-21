@@ -26,9 +26,7 @@ namespace Starfall {
         }
 
         buf = *(void**)(__readgsqword(0x60) + 0x10);
-        EOSBuf = GetModuleHandleA("EOSSDK-Win64-Shipping.dll");
-        if (!EOSBuf)
-            EOSBuf = LoadLibraryA("EOSSDK-Win64-Shipping.dll");
+        EOSBuf = LoadLibraryA("EOSSDK-Win64-Shipping");
 
         {
             auto section = pe_get_section((char*)buf, ".text");

@@ -24,18 +24,17 @@ struct pf_patch_t pf_construct_patch(void *matches, void *masks, uint32_t count,
     return patch;
 }
 
-struct pf_patchset_t pf_construct_patchset(struct pf_patch_t *patches, uint32_t count, bool (*handler)(void *buf, size_t size, struct pf_patchset_t patchset)) {
+struct pf_patchset_t pf_construct_patchset(struct pf_patch_t *patches, uint32_t count) {
     struct pf_patchset_t patchset;
 
     patchset.patches = patches;
     patchset.count = count;
-    patchset.handler = handler;
 
     return patchset;
 }
 
 bool pf_patchset_emit(void *buf, size_t size, struct pf_patchset_t patchset) {
-    return patchset.handler(buf, size, patchset);
+    return pf_find_maskmatch(buf, size, patchset);
 }
 
 void pf_disable_patch(struct pf_patch_t *patch) {
@@ -133,7 +132,7 @@ void *pf_find_zero_buf(void *buf, size_t size, size_t shc_count) {
         patch
     };
 
-    struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t), (bool (*)(void *, size_t, struct pf_patchset_t)) pf_find_maskmatch);
+    struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t));
 
     pf_patchset_emit(buf, size, patchset);
 

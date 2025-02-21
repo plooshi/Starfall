@@ -64,7 +64,7 @@ namespace Starfall {
                 patch8
             };
 
-            constexpr static struct pf_patchset_t patchset2 = pf_construct_patchset(patches2, sizeof(patches2) / sizeof(struct pf_patch_t), (bool (*)(void*, size_t, pf_patchset_t))pf_find_maskmatch);
+            constexpr static struct pf_patchset_t patchset2 = pf_construct_patchset(patches2, sizeof(patches2) / sizeof(struct pf_patch_t));
 
             pf_patchset_emit(tbuf, tsize, patchset2);
         }
@@ -83,7 +83,7 @@ namespace Starfall {
                 patch4
             };
 
-            constexpr static struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t), (bool (*)(void*, size_t, pf_patchset_t))pf_find_maskmatch);
+            constexpr static struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t));
 
             pf_patchset_emit(tbuf, tsize, patchset);
             //AsmHook((void*)(uint64_t(buf) + 0x221a404), Hooks::RequestExitWithStatusHook);

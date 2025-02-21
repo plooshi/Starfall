@@ -38,11 +38,11 @@ namespace Starfall {
                     L"ol.epicgames.com",
                     L"ol.epicgames.net",
                     //L".akamaized.net", // if you have your own blurl
+                    //L"cdn2.unrealengine.com", // only needed if you have fixed friend images in friends list
                     L"on.epicgames.com",
                     L"game-social.epicgames.com",
                     L"ak.epicgames.com",
                     L"epicgames.dev"
-                    //L"cdn2.unrealengine.com" // only needed if you have fixed friend images in friends list
                 };
 
                 for (int i = 0; i < sizeof(redirectedUrls) / sizeof(wchar_t *); i++) {
