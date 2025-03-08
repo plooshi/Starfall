@@ -56,10 +56,12 @@ def:
         }
         // this works bc the first request is a datarouter request, and the second request should be after engine init
         else if (!setupMemLeak && FixMemLeak) {
-            constexpr static struct pf_patch_t ml_patch = pf_construct_patch_sig("4C 8B DC 55 57 41 56 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B 01 41 B6", Ret0Callback);
+            constexpr static struct pf_patch_t ml_patch = pf_construct_patch_sig("48 8B 01 4C 8D 41 08 48 FF 60 20", Ret0Callback);
+            constexpr static struct pf_patch_t ml_patch2 = pf_construct_patch_sig("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B 01 4C 8B C2 48 8D 54 24", Ret0Callback);
 
             constexpr static struct pf_patch_t patches[] = {
-                ml_patch
+                ml_patch,
+                ml_patch2
             };
 
             constexpr static struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t));

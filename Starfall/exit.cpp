@@ -8,32 +8,30 @@ namespace Starfall {
     namespace Hooks {
         void RequestExitWithStatusHook(bool Force, unsigned char Code)
         {
-            if (dontExit == 0) {
+            /*if (dontExit == 0) {
                 TerminateProcess(GetCurrentProcess(), Code);
             }
             else {
 
                 dontExit--;
-            }
+            }*/
         }
 
         void UnsafeEnvironmentPopupHook(wchar_t** unknown1, unsigned __int8 _case, __int64 unknown2, char unknown3)
         {
-            dontExit++;
+            //dontExit++;
         }
     }
 
     namespace Callbacks {
         bool RequestExitWithStatusCallback(struct pf_patch_t* patch, void* stream) {
-            /*AsmHook(stream, Hooks::RequestExitWithStatusHook);
-            return true;*/
-            return Ret0Callback(patch, stream);
+            AsmHook(stream, Hooks::RequestExitWithStatusHook);
+            return true;
         }
 
         bool UnsafeEnvironmentPopupCallback(struct pf_patch_t* patch, void* stream) {
-            /*AsmHook(stream, Hooks::UnsafeEnvironmentPopupHook);
-            return true;*/
-            return Ret0Callback(patch, stream);
+            AsmHook(stream, Hooks::UnsafeEnvironmentPopupHook);
+            return true;
         }
 
         bool PushWidgetCallback(struct pf_patch_t* patch, void* stream) {
@@ -92,9 +90,9 @@ namespace Starfall {
             constexpr static struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t));
 
             pf_patchset_emit(tbuf, tsize, patchset);
-            //AsmHook((void*)(uint64_t(buf) + 0x221a404), Hooks::RequestExitWithStatusHook);
-            //AsmHook((void*)(uint64_t(buf) + 0x221a438), Hooks::RequestExitWithStatusHook);
-            //AsmHook((void*)(uint64_t(buf) + 0x48830b0), Hooks::UnsafeEnvironmentPopupHook);
+            /*AsmHook((void*)(uint64_t(buf) + 0x221a404), Hooks::RequestExitWithStatusHook);
+            AsmHook((void*)(uint64_t(buf) + 0x221a438), Hooks::RequestExitWithStatusHook);
+            AsmHook((void*)(uint64_t(buf) + 0x48830b0), Hooks::UnsafeEnvironmentPopupHook);*/
         }
     }
 }
