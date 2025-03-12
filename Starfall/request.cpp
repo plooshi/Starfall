@@ -135,41 +135,47 @@ def:
         };
 
 
-        __forceinline void* checkStream(void *stream) {
+        __forceinline void* checkStream(void *stream, bool bEOS) {
             for (int i = 0; i < 2048; i++) {
-                if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i, true)) {
-                    Log(Display, "Found with 4C 8B DC\n");
-                    goto setStream;
-                }
-                else if (CheckBytes<0x48, 0x8B, 0xC4>(stream, i, true)) {
-                    Log(Display, "Found with 48 8B C4\n");
-                setStream:
-                    return (uint8_t*)stream - i;
-                }
-                else if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true) || CheckBytes<0x48, 0x83, 0xEC>(stream, i, true)) {
-                    for (int x = 0; x < 50; x++) {
-                        if (CheckBytes<0x40>(stream, i + x, true)) {
-                            Log(Display, "Found with 40\n");
-                            return (uint8_t*)stream - i - x;
-                        }
-                        else if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i + x, true) || CheckBytes<0x48, 0x8B, 0xC4>(stream, i + x, true) || CheckBytes<0x48, 0x89, 0x5C>(stream, i + x, true))
-                            break;
+                if (bEOS)
+                {
+                    if (CheckBytes<0x48, 0x89, 0x5C>(stream, i, true)) {
+                        Log(Display, "Found with 49 89 5C, offset: %llx\n", __int64(stream) - i - __int64(buf));
+                        goto setStream;
                     }
                 }
-                else if (CheckBytes<0x48, 0x89, 0x5C>(stream, i, true)) {
-                    Log(Display, "Found with 49 89 5C\n");
-                    goto setStream;
+                else
+                {
+                    if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i, true)) {
+                        Log(Display, "Found with 4C 8B DC, offset: %llx\n", __int64(stream) - i - __int64(buf));
+                        goto setStream;
+                    }
+                    else if (CheckBytes<0x48, 0x8B, 0xC4>(stream, i, true)) {
+                        Log(Display, "Found with 48 8B C4, offset: %llx\n", __int64(stream) - i - __int64(buf));
+                    setStream:
+                        return (uint8_t*)stream - i;
+                    }
+                    else if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true) || CheckBytes<0x48, 0x83, 0xEC>(stream, i, true)) {
+                        for (int x = 0; x < 50; x++) {
+                            if (CheckBytes<0x40>(stream, i + x, true)) {
+                                Log(Display, "Found with 40, offset: %llx\n", __int64(stream) - i - x - __int64(buf));
+                                return (uint8_t*)stream - i - x;
+                            }
+                            else if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i + x, true) || CheckBytes<0x48, 0x8B, 0xC4>(stream, i + x, true) || CheckBytes<0x48, 0x89, 0x5C>(stream, i + x, true))
+                                break;
+                        }
+                    }
                 }
             }
             return nullptr;
         }
 
-        bool InternalCallback(void* stream, void* rbuf, size_t rsize, bool (*callback)(pf_patch_t*, void*)) {
+        bool InternalCallback(void* stream, void* rbuf, size_t rsize, bool (*callback)(pf_patch_t*, void*), bool bEOS) {
             void* saddr = (void*)((__int64(stream) + 7) + *(int32_t*)(__int64(stream) + 3));
             void* newStream = nullptr;
             if (__int64(saddr) >= __int64(rbuf) && __int64(saddr) < (__int64(rbuf) + (int64_t)rsize))
                 if (wcscmp((wchar_t*)saddr, L"STAT_FCurlHttpRequest_ProcessRequest") == 0 || wcscmp((wchar_t*)saddr, L"%p: request (easy handle:%p) has been added to threaded queue for processing") == 0)
-                    if (newStream = checkStream(stream)) goto Out;
+                    if (newStream = checkStream(stream, bEOS)) goto Out;
             return false;
         Out:
             char* ptrMatches = (char*)&newStream;
@@ -185,11 +191,11 @@ def:
             return true;
         }
         bool StringCallback(struct pf_patch_t* patch, void* stream) {
-            return InternalCallback(stream, rbuf, rsize, PtrCallback);
+            return InternalCallback(stream, rbuf, rsize, PtrCallback, false);
         }
 
         bool EOSStringCallback(struct pf_patch_t* patch, void* stream) {
-            return InternalCallback(stream, EOSRDataBuf, EOSRDataSize, EOSPtrCallback);
+            return InternalCallback(stream, EOSRDataBuf, EOSRDataSize, EOSPtrCallback, true);
         }
     }
 
