@@ -14,7 +14,6 @@ namespace Unreal {
         static inline void** ProcessRequestVT = nullptr;
 
         FString GetURL();
-        void SetURL(URL& URL);
     };
 }
 

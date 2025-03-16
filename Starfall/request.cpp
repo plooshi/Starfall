@@ -16,13 +16,6 @@ namespace Unreal {
     {
         return ((FString&(*)(FCurlHttpRequest*, FString)) VTable[0])(this, FString());
     }
-
-    __forceinline void FCurlHttpRequest::SetURL(URL& URL)
-    {
-        FString str = URL;
-        ((void (*)(FCurlHttpRequest*, FString)) VTable[SetURLIdx])(this, str);
-        free(str.String);
-    }
 }
 
 namespace Starfall {
@@ -90,7 +83,10 @@ def:
                 else {
                     __URL_SetHost(url, Backend);
                 }
-                Request->SetURL(*url);
+
+                FString str = *url;
+                ((void (*)(FCurlHttpRequest*, FString)) Request->VTable[OG == EOSProcessRequestOG ? 10 : FCurlHttpRequest::SetURLIdx])(Request, str);
+                free(str.String);
 
                 UseBackendParam ? url->Dealloc() : url->DeallocPathQuery();
             }
