@@ -19,7 +19,7 @@ namespace Unreal {
 }
 
 namespace Starfall {
-    bool setupMemLeak = false;
+    int setupMemLeak = 0;
     void SetupRequest(FCurlHttpRequest* Request) {
         if (FCurlHttpRequest::SetURLIdx == 0) {
             void* GetFunc = *Request->VTable;
@@ -48,7 +48,7 @@ def:
             FCurlHttpRequest::SetURLIdx = 10;
         }
         // this works bc the first request is a datarouter request, and the second request should be after engine init
-        else if (!setupMemLeak && FixMemLeak) {
+        else if (++setupMemLeak == 5 && FixMemLeak) {
             constexpr static struct pf_patch_t ml_patch = pf_construct_patch_sig("48 8B 01 4C 8D 41 08 48 FF 60 20", Ret0Callback);
             constexpr static struct pf_patch_t ml_patch2 = pf_construct_patch_sig("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B 01 4C 8B C2 48 8D 54 24", Ret0Callback);
 
@@ -60,7 +60,6 @@ def:
             constexpr static struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t));
 
             pf_patchset_emit(tbuf, tsize, patchset);
-            setupMemLeak = true;
         }
     }
 
