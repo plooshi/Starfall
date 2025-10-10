@@ -77,7 +77,7 @@ namespace Starfall {
 
         void FindPushWidget()
         {
-            /*constexpr static auto patch = pf_construct_patch_sig("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 30 48 8B E9 49 8B D9 48 8D 0D ? ? ? ? 49 8B F8 48 8B F2 E8 ? ? ? ? 4C 8B CF 48 89 5C 24 ? 4C 8B C6 48 8B D5 48 8B 48 78", PushWidgetCallback);
+            constexpr static auto patch = pf_construct_patch_sig("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 30 48 8B E9 49 8B D9 48 8D 0D ? ? ? ? 49 8B F8 48 8B F2 E8 ? ? ? ? 4C 8B CF 48 89 5C 24 ? 4C 8B C6 48 8B D5 48 8B 48 78", PushWidgetCallback);
             constexpr static auto patch2 = pf_construct_patch_sig("48 8B C4 4C 89 40 18 48 89 50 10 48 89 48 08 55 53 56 57 41 54 41 55 41 56 41 57 48 8D 68 B8 48 81 EC ? ? ? ? 65 48 8B 04 25", PushWidgetCallback); // 26.00
             constexpr static auto patch3 = pf_construct_patch_sig("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 56 41 57 48 8D 68 A1 48 81 EC ? ? ? ? 65 48 8B 04 25 ? ? ? ? 48 8B F9 B9 ? ? ? ?", PushWidgetCallback); // 28.00/30.00
 
@@ -89,10 +89,7 @@ namespace Starfall {
 
             constexpr static struct pf_patchset_t patchset = pf_construct_patchset(patches, sizeof(patches) / sizeof(struct pf_patch_t));
 
-            pf_patchset_emit(tbuf, tsize, patchset);*/
-            AsmHook((void*)(uint64_t(buf) + 0x221a404), Hooks::RequestExitWithStatusHook);
-            AsmHook((void*)(uint64_t(buf) + 0x221a438), Hooks::RequestExitWithStatusHook);
-            AsmHook((void*)(uint64_t(buf) + 0x48830b0), Hooks::UnsafeEnvironmentPopupHook);
+            pf_patchset_emit(tbuf, tsize, patchset);
         }
     }
 }
