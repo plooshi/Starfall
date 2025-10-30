@@ -35,7 +35,7 @@ namespace Starfall {
             if (URLOffset == 0) goto def;
             for (int64_t i = 0; i < ((__int64(FCurlHttpRequest::ProcessRequestVT) - __int64(Request->VTable)) / 8) /* search radius */; i++) {
                 auto func = Request->VTable[i];
-                for (int j = 0; j < 100; j++) {
+                for (int j = 0; j < 0x20; j++) {
                     if (CheckBytes<0x48, 0x81, 0xC1>(func, j)) {
                         if (*(uint32_t*)(__int64(func) + j + 3) == URLOffset) {
                             FCurlHttpRequest::SetURLIdx = i;
@@ -135,25 +135,25 @@ def:
                 if (bEOS)
                 {
                     if (CheckBytes<0x48, 0x89, 0x5C>(stream, i, true)) {
-                        Log(Display, "Found with 49 89 5C, offset: %llx\n", __int64(stream) - i - __int64(buf));
+                        Log(Display, "Found with 49 89 5C, offset: %llx\n", __int64(stream) - i - __int64(bEOS ? EOSBuf : buf));
                         goto setStream;
                     }
                 }
                 else
                 {
                     if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i, true)) {
-                        Log(Display, "Found with 4C 8B DC, offset: %llx\n", __int64(stream) - i - __int64(buf));
+                        Log(Display, "Found with 4C 8B DC, offset: %llx\n", __int64(stream) - i - __int64(bEOS ? EOSBuf : buf));
                         goto setStream;
                     }
                     else if (CheckBytes<0x48, 0x8B, 0xC4>(stream, i, true)) {
-                        Log(Display, "Found with 48 8B C4, offset: %llx\n", __int64(stream) - i - __int64(buf));
+                        Log(Display, "Found with 48 8B C4, offset: %llx\n", __int64(stream) - i - __int64(bEOS ? EOSBuf : buf));
                     setStream:
                         return (uint8_t*)stream - i;
                     }
                     else if (CheckBytes<0x48, 0x81, 0xEC>(stream, i, true) || CheckBytes<0x48, 0x83, 0xEC>(stream, i, true)) {
                         for (int x = 0; x < 50; x++) {
                             if (CheckBytes<0x40>(stream, i + x, true)) {
-                                Log(Display, "Found with 40, offset: %llx\n", __int64(stream) - i - x - __int64(buf));
+                                Log(Display, "Found with 40, offset: %llx\n", __int64(stream) - i - x - __int64(bEOS ? EOSBuf : buf));
                                 return (uint8_t*)stream - i - x;
                             }
                             else if (CheckBytes<0x4C, 0x8B, 0xDC>(stream, i + x, true) || CheckBytes<0x48, 0x8B, 0xC4>(stream, i + x, true) || CheckBytes<0x48, 0x89, 0x5C>(stream, i + x, true))
