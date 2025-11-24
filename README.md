@@ -1,4 +1,6 @@
 # Starfall
+## Starfall has been replaced by [Tellurium](https://github.com/plooshi/Tellurium).
+
 Starfall is an universal SSL bypass / redirect for native UE HTTP games, made for Fortnite. <br>
 
 # Configuring Starfall
